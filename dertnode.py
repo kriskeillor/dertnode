@@ -86,9 +86,12 @@ ARH = 0 # Air Relative Humidity
 ATF = 0 # Air Temp F
 LUX = 0 # Luminous Flux
 SWC = 0 # Soil Water Content
-STF = 0 # Soil Temp F
+STC = 0 # Soil Temp C
 # Display Values
+airStr = ""
 luxStr = ""
+soilWCStr = ""
+soilStr = ""
 
 # User Input Variables
 RunLights = False;
@@ -100,6 +103,7 @@ decRegex = "\d+\.\d+"
 intRegex = "\d+"
 
 display.fill(0)
+display.text("DERT Demo Mode", 29, 0, 1)
 try:
     rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, 915.0)
     display.text("RFM9x Detected", 0, 8, 1)
@@ -122,19 +126,19 @@ while True:
     # Check buttons
     if not btnA.value:
         outA.value = True
-        display.text("A", 108, 8, 1)
+        display.text("O", width-5, height-8, 1)
     else:
         outA.value = False
 
     if not btnB.value:
         outB.value = True
-        display.text("B", 113, 8, 1)
+        display.text("O", width-5, height-8, 1)
     else:
         outB.value = False
 
     if not btnC.value:
         outC.value = True
-        display.text("C", 121, 8, 1)
+        display.text("O", width-5, height-8, 1)
     else:
         outC.value = False
 
@@ -143,7 +147,7 @@ while True:
         data_str = serPrt.read(serPrt.in_waiting).decode("ascii");
         # Print rx data to term and notification to OLED
         print(data_str)
-        display.text("Data read", 0, 8, 1)
+        display.text("I", width-10, height-8, 1)
         # Check if an error is reported
         if "! Error" in data_str:
             print("^ Error reported by DERT ^")
@@ -163,23 +167,45 @@ while True:
                 data_num = re.findall(intRegex, data_str)
                 if (len(data_num)>0):
                     LUX = int(data_num[0])
+            # Check for Soil Water Content data
+            if "+SWC" in data_str:
+                data_num = re.findall(decRegex, data_str)
+                if (len(data_num)>0):
+                    SWC = round(float(data_num[0]), 2)
+                    if (SWC > 10):
+                        SWC = round(float(SWC), 1)
+            # Check for Soil Temperature data
+            if "+STC" in data_str:
+                data_num = re.findall(decRegex, data_str)
+                if (len(data_num)>0):
+                    STC = round(float(data_num[0]), 1)
 
-    # Display Relative Humidity
-    display.text(str(ARH)+"%RH", 0, 16, 1)
-
-    # Display Air Temp
-    display.text(str(ATF)+"F", 0, 24, 1)
+    # Display Relative Humidity & Air Temp
+    airStr = "Air: " + str(ARH) + "% RH, " + str(ATF) + " F"
+    display.text(airStr, 0, 8, 1)
+    # Hacky degree symbol
+    display.text(".", 115, 3, 1)
 
     # Display Lux
     if (LUX < 1000):
-        luxStr = str(LUX) + "lx"
-        display.text(luxStr, 50, 16, 1)
+        luxStr = "Light: " + str(LUX) + " lx"
+        display.text(luxStr, 0, 24, 1)
     else:
         if (LUX > 10000):
-            luxStr = str(round(LUX/1000, 1)) + "klx"
+            luxStr = "Light: " + str(round(LUX/1000, 1)) + " klx"
         else:
-            luxStr = str(round(LUX/1000, 2)) + "klx"
-        display.text(luxStr, 50, 16, 1)
+            luxStr = "Light: " + str(round(LUX/1000, 2)) + " klx"
+        display.text(luxStr, 0, 24, 1)
+
+    # Display Soil Water Content & Temp
+    if len(str(SWC)) < 4:
+        soilWCStr = str(SWC) + "0"
+    else:
+        soilWCStr = str(SWC)
+    soilStr = "Soil: " + soilWCStr + "% W, " + str(STC) + " C"
+    display.text(soilStr, 0, 16, 1)
+    # Hacky degree symbol
+    display.text(".", 115, 11, 1)
 
     display.show()
     time.sleep(0.1)
