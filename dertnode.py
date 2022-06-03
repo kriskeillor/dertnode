@@ -87,14 +87,17 @@ ATF = 0 # Air Temp F
 LUX = 0 # Luminous Flux
 SWC = 0 # Soil Water Content
 STF = 0 # Soil Temp F
+# Display Values
+luxStr = ""
 
 # User Input Variables
 RunLights = False;
 RunPump1 = False;
 RunPump2 = False;
 
-# Regex to search for a single decimal value
+# Regexes to search for a numerical value
 decRegex = "\d+\.\d+"
+intRegex = "\d+"
 
 display.fill(0)
 try:
@@ -155,14 +158,28 @@ while True:
                 data_num = re.findall(decRegex, data_str)
                 if (len(data_num)>0):
                     ATF = round(float(data_num[0]), 1)
+            # Check for Lux data
+            if "+LUX" in data_str:
+                data_num = re.findall(intRegex, data_str)
+                if (len(data_num)>0):
+                    LUX = int(data_num[0])
 
     # Display Relative Humidity
-    display.text(str(ARH), 0, 16, 1)
-    display.text("%RH", 25, 16, 1)
+    display.text(str(ARH)+"%RH", 0, 16, 1)
 
     # Display Air Temp
-    display.text(str(ATF), 0, 24, 1)
-    display.text("u'\N{DEGREE SIGN}'F", 25, 24, 1)
+    display.text(str(ATF)+"F", 0, 24, 1)
+
+    # Display Lux
+    if (LUX < 1000):
+        luxStr = str(LUX) + "lx"
+        display.text(luxStr, 50, 16, 1)
+    else:
+        if (LUX > 10000):
+            luxStr = str(round(LUX/1000, 1)) + "klx"
+        else:
+            luxStr = str(round(LUX/1000, 2)) + "klx"
+        display.text(luxStr, 50, 16, 1)
 
     display.show()
     time.sleep(0.1)
