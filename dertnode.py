@@ -150,7 +150,7 @@ while True:
         display.text("I", width-10, height-8, 1)
         # Check if an error is reported
         if "! Error" in data_str:
-            print("^ Error reported by DERT ^")
+            display.text("E", width-15, height-8, 1)
         else:
             # Check for Relative Humidity data
             if "+ARH" in data_str:
