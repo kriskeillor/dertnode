@@ -145,14 +145,24 @@ while True:
         if "! Error" in data_str:
             print("^ Error reported by DERT ^")
         else:
+            # Check for Relative Humidity data
             if "+ARH" in data_str:
                 data_num = re.findall(decRegex, data_str)
                 if (len(data_num)>0):
                     ARH = round(float(data_num[0]), 1)
+            # Check for Air Temperature data
+            if "+ATF" in data_str:
+                data_num = re.findall(decRegex, data_str)
+                if (len(data_num)>0):
+                    ATF = round(float(data_num[0]), 1)
 
     # Display Relative Humidity
     display.text(str(ARH), 0, 16, 1)
     display.text("%RH", 25, 16, 1)
+
+    # Display Air Temp
+    display.text(str(ATF), 0, 24, 1)
+    display.text("u'\N{DEGREE SIGN}'F", 25, 24, 1)
 
     display.show()
     time.sleep(0.1)
