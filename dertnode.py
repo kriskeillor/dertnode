@@ -12,6 +12,7 @@ Author: Brent Rubell for Adafruit Industries
 import time
 import busio
 import serial
+import re
 from digitalio import DigitalInOut, Direction, Pull
 import board
 # Import the SSD1306 module.
@@ -92,46 +93,66 @@ RunLights = False;
 RunPump1 = False;
 RunPump2 = False;
 
+# Regex to search for a single decimal value
+decRegex = "\d+\.\d+"
+
+display.fill(0)
+try:
+    rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, 915.0)
+    display.text("RFM9x Detected", 0, 8, 1)
+    display.show()
+    time.sleep(3)
+except RuntimeError as error:
+    # Thrown on ver mismatch
+    display.text("RFM9x: ERROR", 0, 8, 1)
+    print("RFM9x Error: ", error)
+    display.show()
+    time.sleep(3)
+
 while True:
     # Clear the image
     display.fill(0)
 
     # Attempt to set up the RFM9x Module
-    try:
-        rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, 915.0)
-        display.text('RFM9x: Detected', 0, 0, 1)
-    except RuntimeError as error:
-        # Thrown on version mismatch
-        display.text('RFM9x: ERROR', 0, 0, 1)
-        print('RFM9x Error: ', error)
+    display.text("DERT Demo Mode", 29, 0, 1)
 
     # Check buttons
     if not btnA.value:
         outA.value = True
+        display.text("A", 108, 8, 1)
     else:
         outA.value = False
 
     if not btnB.value:
         outB.value = True
+        display.text("B", 113, 8, 1)
     else:
         outB.value = False
 
     if not btnC.value:
         outC.value = True
+        display.text("C", 121, 8, 1)
     else:
         outC.value = False
 
     # Check UART
     if (serPrt.inWaiting() > 0):
         data_str = serPrt.read(serPrt.in_waiting).decode("ascii");
-        display.text("SerPort Input!", 0, height-14, 1)
+        # Print rx data to term and notification to OLED
         print(data_str)
-        display.show()
-        time.sleep(0.5)
+        display.text("Data read", 0, 8, 1)
         # Check if an error is reported
         if "! Error" in data_str:
-            print("Error reported by DERT:")
-            print(data_str)
+            print("^ Error reported by DERT ^")
+        else:
+            if "+ARH" in data_str:
+                data_num = re.findall(decRegex, data_str)
+                if (len(data_num)>0):
+                    ARH = round(float(data_num[0]), 1)
+
+    # Display Relative Humidity
+    display.text(str(ARH), 0, 16, 1)
+    display.text("%RH", 25, 16, 1)
 
     display.show()
     time.sleep(0.1)
