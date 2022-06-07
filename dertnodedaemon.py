@@ -11,6 +11,7 @@ Author: Brent Rubell for Adafruit Industries
 """
 #!/usr/bin/env python3
 
+import os
 import time
 import busio
 import serial
@@ -21,6 +22,11 @@ import board
 import adafruit_ssd1306
 # Import the RFM9x radio module.
 import adafruit_rfm9x
+# Import the MUDD library
+import mudd.ERROR_CODES
+import mudd.MuddSocket
+from mudd.MuddTable import append_entry
+
 
 # Button A
 btnA = DigitalInOut(board.D5)
@@ -95,6 +101,13 @@ luxStr = ""
 soilWCStr = ""
 soilStr = ""
 
+# Datalogging Variables
+arh_path = os.path.expanduser("~/iotshare/dertnode/ArhData.csv")
+atf_path = os.path.expanduser("~/iotshare/dertnode/AtfData.csv")
+lux_path = os.path.expanduser("~/iotshare/dertnode/LuxData.csv")
+swc_path = os.path.expanduser("~/iotshare/dertnode/SwcData.csv")
+stc_path = os.path.expanduser("~/iotshare/dertnode/StcData.csv")
+
 # User Input Variables
 RunLights = False;
 RunPump1 = False;
@@ -159,16 +172,19 @@ while True:
                 data_num = re.findall(decRegex, data_str)
                 if (len(data_num)>0):
                     ARH = round(float(data_num[0]), 1)
+                    append_entry(arh_path, "ARH", ARH)
             # Check for Air Temperature data
             if "+ATF" in data_str:
                 data_num = re.findall(decRegex, data_str)
                 if (len(data_num)>0):
                     ATF = round(float(data_num[0]), 1)
+                    append_entry(atf_path, "ATF", ATF)
             # Check for Lux data
             if "+LUX" in data_str:
                 data_num = re.findall(intRegex, data_str)
                 if (len(data_num)>0):
                     LUX = int(data_num[0])
+                    append_entry(lux_path, "LUX", LUX)
             # Check for Soil Water Content data
             if "+SWC" in data_str:
                 data_num = re.findall(decRegex, data_str)
@@ -176,11 +192,13 @@ while True:
                     SWC = round(float(data_num[0]), 2)
                     if (SWC > 10):
                         SWC = round(float(SWC), 1)
+                    append_entry(swc_path, "SWC", SWC)
             # Check for Soil Temperature data
             if "+STC" in data_str:
                 data_num = re.findall(decRegex, data_str)
                 if (len(data_num)>0):
                     STC = round(float(data_num[0]), 1)
+                    append_entry(stc_path, "STC", STC)
 
     # Display Relative Humidity & Air Temp
     airStr = "Air: " + str(ARH) + "% RH, " + str(ATF) + " F"
